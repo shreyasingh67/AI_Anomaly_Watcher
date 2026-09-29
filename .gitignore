@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+
+.env
+
+.streamlit/secrets.toml
+
+data/anomaly_report.csv
+data/alert_report.csv
