@@ -1,23 +1,36 @@
 import pandas as pd
+from sklearn.ensemble import IsolationForest
+
+from data_cleaner import load_data
+from data_cleaner import clean_data
+from data_cleaner import validate_data
+
 from explanation_generator import generate_explanation
+
 from alert_manager import create_alert
+from alert_manager import save_alert_history
 
 
-# --------------------------------------------------
-# Load business data
-# --------------------------------------------------
+# -----------------------------------------
+# Load and clean business data
+# -----------------------------------------
 
-data = pd.read_csv(
-    "data/business_data.csv",
-    parse_dates=["Date"]
+data = load_data(
+    "data/business_data.csv"
 )
 
-print(data)
+data = clean_data(
+    data
+)
+
+validate_data(
+    data
+)
 
 
-# --------------------------------------------------
-# List of business metrics
-# --------------------------------------------------
+# -----------------------------------------
+# Business metrics
+# -----------------------------------------
 
 metrics = [
     "Revenue",
@@ -29,364 +42,227 @@ metrics = [
 ]
 
 
-# --------------------------------------------------
-# Check each metric
-# --------------------------------------------------
+# -----------------------------------------
+# ML-based anomaly detection
+# -----------------------------------------
+
+ml_features = data[metrics]
+
+ml_model = IsolationForest(
+    contamination=0.15,
+    random_state=42
+)
+
+ml_model.fit(
+    ml_features
+)
+
+data["ML_Prediction"] = ml_model.predict(
+    ml_features
+)
+
+data["ML_Anomaly"] = (
+    data["ML_Prediction"] == -1
+)
+
+data["ML_Anomaly_Score"] = (
+    ml_model.decision_function(
+        ml_features
+    )
+)
+
+
+# -----------------------------------------
+# Calculate averages and standard deviation
+# -----------------------------------------
 
 for metric in metrics:
 
-    print(
-        "Checking metric:",
-        metric
+    data[f"{metric}_Average"] = (
+        data[metric].mean()
+    )
+
+    data[f"{metric}_Std"] = (
+        data[metric].std()
     )
 
 
-# --------------------------------------------------
-# Calculate average of each metric
-# --------------------------------------------------
+# -----------------------------------------
+# Calculate Z-Scores
+# -----------------------------------------
 
 for metric in metrics:
 
-    average = data[metric].mean()
-
-    print(
-        f"{metric} Average:",
-        average
+    data[f"{metric}_ZScore"] = (
+        (
+            data[metric]
+            - data[f"{metric}_Average"]
+        )
+        / data[f"{metric}_Std"]
     )
-
-
-# --------------------------------------------------
-# Calculate anomaly thresholds
-# --------------------------------------------------
-
-thresholds = {}
-
-for metric in metrics:
-
-    average = data[metric].mean()
-
-    thresholds[metric] = average * 1.5
-
-
-print("Metric Thresholds:")
-print(thresholds)
-
-
-# --------------------------------------------------
-# Detect high and low anomalies
-# --------------------------------------------------
-
-for metric in metrics:
-
-    average = data[metric].mean()
-
-    upper_threshold = average * 1.5
-
-    lower_threshold = average * 0.6
 
     data[f"{metric}_Anomaly"] = (
-        (data[metric] > upper_threshold) |
-        (data[metric] < lower_threshold)
+        data[f"{metric}_ZScore"].abs() >= 2
     )
 
 
-# --------------------------------------------------
-# Display all metric anomalies
-# --------------------------------------------------
-
-print("All Metric Anomalies:")
-
-print(
-    data[
-        ["Date"] +
-        [f"{metric}_Anomaly" for metric in metrics]
-    ]
-)
-
-
-# --------------------------------------------------
-# Revenue anomaly detection
-# --------------------------------------------------
-
-normal_revenue = data["Revenue"].mean()
-
-print(
-    "Average Revenue:",
-    normal_revenue
-)
-
-
-revenue_threshold = normal_revenue * 1.5
-
-print(
-    "Revenue Threshold:",
-    revenue_threshold
-)
-
-
-data["Revenue_Anomaly"] = (
-    data["Revenue"] > revenue_threshold
-)
-
-
-print(
-    data[
-        ["Date", "Revenue", "Revenue_Anomaly"]
-    ]
-)
-
-
-# --------------------------------------------------
-# Get detected Revenue anomalies
-# --------------------------------------------------
-
-anomalies = data[
-    data["Revenue_Anomaly"]
-]
-
-
-print("Detected Revenue Anomalies:")
-
-print(
-    anomalies[
-        ["Date", "Revenue"]
-    ]
-)
-
-
-# --------------------------------------------------
-# Calculate Revenue change percentage
-# --------------------------------------------------
-
-data["Revenue_Change_Percent"] = (
-    (data["Revenue"] - normal_revenue)
-    / normal_revenue
-) * 100
-
-
-print(
-    data[
-        [
-            "Date",
-            "Revenue",
-            "Revenue_Change_Percent"
-        ]
-    ]
-)
-
-
-# --------------------------------------------------
-# Generate Revenue explanation
-# --------------------------------------------------
-
-anomalies = data[
-    data["Revenue_Anomaly"]
-]
-
-
-for _, row in anomalies.iterrows():
-
-    print(
-        f"Revenue anomaly detected on "
-        f"{row['Date'].date()}: "
-        f"Revenue was ₹{row['Revenue']:,}, "
-        f"which is "
-        f"{row['Revenue_Change_Percent']:.1f}% "
-        f"above the average."
-    )
-
-
-# --------------------------------------------------
-# Display all detected anomalies
-# --------------------------------------------------
-
-print("\nDetected Anomalies:")
-
+# -----------------------------------------
+# Calculate percentage change
+# -----------------------------------------
 
 for metric in metrics:
 
-    anomaly_column = f"{metric}_Anomaly"
-
-    detected = data[
-        data[anomaly_column]
-    ]
-
-    if not detected.empty:
-
-        print(
-            f"\n{metric} Anomalies:"
+    data[f"{metric}_Change_Percent"] = (
+        (
+            data[metric]
+            - data[f"{metric}_Average"]
         )
-
-        print(
-            detected[
-                ["Date", metric]
-            ]
-        )
-
-
-# --------------------------------------------------
-# Calculate percentage change for all metrics
-# --------------------------------------------------
-
-print("\nAnomaly Percentage Changes:")
-
-
-for metric in metrics:
-
-    average = data[metric].mean()
-
-    data[
-        f"{metric}_Change_Percent"
-    ] = (
-        (data[metric] - average)
-        / average
+        / data[f"{metric}_Average"]
     ) * 100
 
-    anomaly_column = (
-        f"{metric}_Anomaly"
-    )
 
-    detected = data[
-        data[anomaly_column]
-    ]
+# -----------------------------------------
+# Detect anomalies
+# -----------------------------------------
 
-    if not detected.empty:
-
-        print(
-            f"\n{metric}:"
-        )
-
-        for _, row in detected.iterrows():
-
-            print(
-                f"{row['Date'].date()} -> "
-                f"{row[metric]} "
-                f"({row[f'{metric}_Change_Percent']:.1f}% "
-                f"from average)"
-            )
-
-
-# --------------------------------------------------
-# Business-friendly explanations
-# --------------------------------------------------
-
-print("\nBusiness Explanations:")
+print(
+    "\n========== DETECTED ANOMALIES =========="
+)
 
 alerts = []
 
 
-for metric in metrics:
+for index, row in data.iterrows():
 
-    anomaly_column = (
-        f"{metric}_Anomaly"
-    )
+    for metric in metrics:
 
-    change_column = (
-        f"{metric}_Change_Percent"
-    )
-
-    detected = data[
-        data[anomaly_column]
-    ]
-
-    for _, row in detected.iterrows():
-
-        change = row[change_column]
-
-        alert = create_alert(
-            metric,
-            row[metric],
-            change
+        anomaly_column = (
+            f"{metric}_Anomaly"
         )
 
-        # Add anomaly date to alert
-        alert["Date"] = row["Date"].date()
+        if row[anomaly_column]:
 
-        alerts.append(alert)
+            change = row[
+                f"{metric}_Change_Percent"
+            ]
 
-        print(
-            "Alert:",
-            alert
-        )
+            # ---------------------------------
+            # Create alert
+            # ---------------------------------
 
-        explanation = generate_explanation(
-            metric,
-            row[metric],
-            change
-        )
+            alert = create_alert(
+                metric,
+                row[metric],
+                change
+            )
 
-        print(
-            f"{metric} anomaly detected on "
-            f"{row['Date'].date()}: "
-            f"{explanation}"
-        )
+            # ---------------------------------
+            # Add ML detection information
+            # ---------------------------------
+
+            alert["ML_Detected"] = bool(
+                row["ML_Anomaly"]
+            )
+
+            alert["ML_Anomaly_Score"] = round(
+                row["ML_Anomaly_Score"],
+                4
+            )
+
+            # ---------------------------------
+            # Add date
+            # ---------------------------------
+
+            alert["Date"] = (
+                row["Date"].date()
+            )
+
+            # ---------------------------------
+            # Generate business explanation
+            # ---------------------------------
+
+            alert["Explanation"] = (
+                generate_explanation(
+                    metric,
+                    row[metric],
+                    change
+                )
+            )
+
+            # ---------------------------------
+            # Store alert
+            # ---------------------------------
+
+            alerts.append(
+                alert
+            )
+
+            # ---------------------------------
+            # Display anomaly
+            # ---------------------------------
+
+            print(
+                f"{metric}: "
+                f"{row[metric]} | "
+                f"Z-Score: "
+                f"{row[f'{metric}_ZScore']:.2f} | "
+                f"Change: "
+                f"{change:.2f}% | "
+                f"ML Detected: "
+                f"{row['ML_Anomaly']}"
+            )
+
+            print(
+                "ML Anomaly Score:",
+                f"{row['ML_Anomaly_Score']:.4f}"
+            )
+
+            print(
+                "Explanation:",
+                alert["Explanation"]
+            )
+
+            print(
+                "----------------------------------"
+            )
 
 
-# --------------------------------------------------
-# Anomaly summary
-# --------------------------------------------------
-
-print("\nAnomaly Summary:")
-
-
-anomaly_columns = [
-    f"{metric}_Anomaly"
-    for metric in metrics
-]
-
-
-data["Total_Anomalies"] = (
-    data[anomaly_columns].sum(axis=1)
-)
-
+# -----------------------------------------
+# Total anomalies
+# -----------------------------------------
 
 print(
-    data[
-        ["Date", "Total_Anomalies"]
-    ]
+    "\nTotal Anomalies:",
+    len(alerts)
 )
 
 
-# --------------------------------------------------
-# Show dates with anomalies
-# --------------------------------------------------
+# -----------------------------------------
+# Save alert history
+# -----------------------------------------
 
-print("\nDates with anomalies:")
-
-
-anomaly_dates = data[
-    data["Total_Anomalies"] > 0
-]
-
-
-print(
-    anomaly_dates[
-        ["Date", "Total_Anomalies"]
-    ]
+save_alert_history(
+    alerts
 )
 
 
-# --------------------------------------------------
-# Save anomaly report
-# --------------------------------------------------
+# -----------------------------------------
+# Save complete anomaly report
+# -----------------------------------------
 
-anomaly_report = data[
-    data["Total_Anomalies"] > 0
-]
-
-
-anomaly_report.to_csv(
+data.to_csv(
     "data/anomaly_report.csv",
     index=False
 )
 
 
-# --------------------------------------------------
+# -----------------------------------------
 # Save alert report
-# --------------------------------------------------
+# -----------------------------------------
 
-alert_report = pd.DataFrame(alerts)
-
+alert_report = pd.DataFrame(
+    alerts
+)
 
 alert_report.to_csv(
     "data/alert_report.csv",
@@ -395,10 +271,5 @@ alert_report.to_csv(
 
 
 print(
-    "Alert report saved successfully!"
-)
-
-
-print(
-    "\nAnomaly report saved successfully!"
+    "\nReports saved successfully."
 )

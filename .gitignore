@@ -1,10 +1,22 @@
+# Virtual environment
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
 
+# Environment variables / secrets
 .env
 
+# Streamlit secrets
 .streamlit/secrets.toml
 
+# Generated reports
 data/anomaly_report.csv
 data/alert_report.csv
+data/alert_history.csv
+data/ml_anomaly_report.csv
+
+# Backup files
+*_backup.py
+*_before_*.py
