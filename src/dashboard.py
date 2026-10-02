@@ -1,6 +1,8 @@
-import streamlit as st
 import pandas as pd
-
+import os
+import subprocess
+import streamlit as st
+import sys
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -29,7 +31,7 @@ st.markdown(
         background-color: #F5F7FA;
     }
 
-    .block-container {
+    .block-container { 
         padding-top: 2rem;
         padding-bottom: 3rem;
     }
@@ -182,6 +184,24 @@ st.markdown(
 """,
     unsafe_allow_html=True
 )
+
+
+# ============================================================
+# GENERATE REPORTS IF THEY DO NOT EXIST
+# ============================================================
+
+if not os.path.exists("data/alert_report.csv") or not os.path.exists("data/ml_anomaly_report.csv"):
+
+    result = subprocess.run(
+        [sys.executable, "src/anomaly_detector.py"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        st.error("Unable to generate anomaly reports.")
+        st.code(result.stderr)
+        st.stop()
 
 
 # ============================================================
