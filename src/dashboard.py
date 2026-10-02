@@ -190,7 +190,7 @@ st.markdown(
 # GENERATE REPORTS IF THEY DO NOT EXIST
 # ============================================================
 
-if not os.path.exists("data/alert_report.csv") or not os.path.exists("data/ml_anomaly_report.csv"):
+if not os.path.exists("data/alert_report.csv"):
 
     result = subprocess.run(
         [sys.executable, "src/anomaly_detector.py"],
@@ -200,6 +200,20 @@ if not os.path.exists("data/alert_report.csv") or not os.path.exists("data/ml_an
 
     if result.returncode != 0:
         st.error("Unable to generate anomaly reports.")
+        st.code(result.stderr)
+        st.stop()
+
+
+if not os.path.exists("data/ml_anomaly_report.csv"):
+
+    result = subprocess.run(
+        [sys.executable, "src/ml_anomaly_detector.py"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        st.error("Unable to generate ML anomaly report.")
         st.code(result.stderr)
         st.stop()
 
