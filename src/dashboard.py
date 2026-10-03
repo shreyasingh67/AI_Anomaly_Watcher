@@ -1,7 +1,8 @@
 import os
+import sys
+import subprocess
 import pandas as pd
 import streamlit as st
-
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -285,7 +286,45 @@ if data is None or data.empty:
 
 data = convert_dates(data)
 
+# ============================================================
+# GENERATE REPORTS IF THEY DO NOT EXIST
+# ============================================================
 
+if not os.path.exists(ALERT_FILE):
+
+    try:
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                os.path.join(
+                    BASE_DIR,
+                    "src",
+                    "anomaly_detector.py"
+                )
+            ],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+
+            st.error(
+                "Unable to generate anomaly report."
+            )
+
+            st.code(
+                result.stderr
+            )
+
+    except Exception as error:
+
+        st.error(
+            f"Anomaly detection failed: {error}"
+        )
+        
+        
 # ============================================================
 # LOAD ALERT REPORT
 # ============================================================
