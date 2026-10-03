@@ -20,3 +20,5 @@ data/ml_anomaly_report.csv
 # Backup files
 *_backup.py
 *_before_*.py
+data/alert_history_backup.csv
+data/business_data_backup.csv

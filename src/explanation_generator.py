@@ -4,98 +4,80 @@
 
 def generate_explanation(metric, value, change):
 
-    direction = "increased" if change > 0 else "decreased"
-
     percentage = abs(change)
 
-    # Revenue explanation
-    if metric == "Revenue":
+    # Total Sales explanation
+    if metric == "total_sales_inr":
 
         if change > 0:
             explanation = (
-                f"Revenue increased by {percentage:.1f}% "
+                f"Total sales increased by {percentage:.1f}% "
                 f"above the average. This may indicate "
-                f"unusually strong sales activity."
+                f"unusually strong sales activity for this order."
             )
         else:
             explanation = (
-                f"Revenue decreased by {percentage:.1f}% "
+                f"Total sales decreased by {percentage:.1f}% "
                 f"below the average. This may indicate "
-                f"lower-than-usual sales activity."
+                f"lower-than-usual sales value for this order."
             )
 
-    # Conversion Rate explanation
-    elif metric == "Conversion_Rate":
-
-        if change < 0:
-            explanation = (
-                f"Conversion rate decreased by {percentage:.1f}% "
-                f"below the average. Traffic may not be converting "
-                f"into orders effectively."
-            )
-        else:
-            explanation = (
-                f"Conversion rate increased by {percentage:.1f}% "
-                f"above the average. Customer conversion "
-                f"performance is unusually high."
-            )
-
-    # Traffic explanation
-    elif metric == "Traffic":
+    # Profit explanation
+    elif metric == "profit_inr":
 
         if change > 0:
             explanation = (
-                f"Traffic increased by {percentage:.1f}% "
-                f"above the average. There may be an unusual "
-                f"increase in website visitors."
+                f"Profit increased by {percentage:.1f}% "
+                f"above the average. This order generated "
+                f"an unusually high profit."
             )
         else:
             explanation = (
-                f"Traffic decreased by {percentage:.1f}% "
-                f"below the average. Website visits are "
-                f"lower than usual."
+                f"Profit decreased by {percentage:.1f}% "
+                f"below the average. This order generated "
+                f"lower-than-usual profit."
             )
 
-    # Cost explanation
-    elif metric == "Cost":
+    # Quantity Sold explanation
+    elif metric == "quantity_sold":
 
         if change > 0:
             explanation = (
-                f"Cost increased by {percentage:.1f}% "
-                f"above the average. Operational or marketing "
-                f"expenses may require investigation."
-            )
-        else:
-            explanation = (
-                f"Cost decreased by {percentage:.1f}% "
-                f"below the average."
-            )
-
-    # Refund explanation
-    elif metric == "Refunds":
-
-        if change > 0:
-            explanation = (
-                f"Refunds increased by {percentage:.1f}% "
+                f"Quantity sold increased by {percentage:.1f}% "
                 f"above the average. This may indicate "
-                f"an unusual increase in returned orders."
+                f"an unusually large order quantity."
             )
         else:
             explanation = (
-                f"Refunds decreased by {percentage:.1f}% "
-                f"below the average."
+                f"Quantity sold decreased by {percentage:.1f}% "
+                f"below the average. This order contains "
+                f"lower-than-usual quantity."
             )
 
-    # Orders explanation
-    elif metric == "Orders":
+    # Price explanation
+    elif metric == "price_inr":
 
-        explanation = (
-            f"Orders {direction} by {percentage:.1f}% "
-            f"compared with the average."
-        )
+        if change > 0:
+            explanation = (
+                f"Product price increased by {percentage:.1f}% "
+                f"above the average. This may indicate "
+                f"an unusually high-priced product."
+            )
+        else:
+            explanation = (
+                f"Product price decreased by {percentage:.1f}% "
+                f"below the average. This may indicate "
+                f"an unusually low-priced product."
+            )
 
     # Default explanation
     else:
+
+        direction = (
+            "increased"
+            if change > 0
+            else "decreased"
+        )
 
         explanation = (
             f"{metric} {direction} by "

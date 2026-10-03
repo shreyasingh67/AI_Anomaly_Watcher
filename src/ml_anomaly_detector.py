@@ -7,7 +7,7 @@ from data_cleaner import clean_data
 
 
 # -----------------------------------------
-# Load and clean business data
+# Load and clean Flipkart data
 # -----------------------------------------
 
 data = load_data(
@@ -20,16 +20,14 @@ data = clean_data(
 
 
 # -----------------------------------------
-# Select business metrics for ML model
+# Select Flipkart metrics for ML model
 # -----------------------------------------
 
 features = [
-    "Revenue",
-    "Orders",
-    "Conversion_Rate",
-    "Traffic",
-    "Cost",
-    "Refunds"
+    "price_inr",
+    "quantity_sold",
+    "total_sales_inr",
+    "profit_inr"
 ]
 
 X = data[features]
@@ -69,7 +67,7 @@ data["ML_Anomaly"] = (
 
 
 # -----------------------------------------
-# Anomaly Score
+# Calculate anomaly score
 # -----------------------------------------
 
 data["ML_Anomaly_Score"] = (
@@ -82,7 +80,7 @@ data["ML_Anomaly_Score"] = (
 # -----------------------------------------
 
 print(
-    "\n========== ML ANOMALY DETECTION =========="
+    "\n========== FLIPKART ML ANOMALY DETECTION =========="
 )
 
 for index, row in data.iterrows():
@@ -94,7 +92,8 @@ for index, row in data.iterrows():
     )
 
     print(
-        f"{row['Date'].date()} | "
+        f"{row['order_date'].date()} | "
+        f"{row['product_name']} | "
         f"{status} | "
         f"Score: "
         f"{row['ML_Anomaly_Score']:.4f}"
@@ -112,5 +111,5 @@ data.to_csv(
 
 
 print(
-    "\nML anomaly report saved successfully."
+    "\nFlipkart ML anomaly report saved successfully."
 )

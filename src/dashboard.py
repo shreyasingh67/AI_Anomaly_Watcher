@@ -1,8 +1,7 @@
-import pandas as pd
 import os
-import subprocess
+import pandas as pd
 import streamlit as st
-import sys
+
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -10,105 +9,40 @@ import sys
 
 st.set_page_config(
     page_title="AI Anomaly Watcher",
-    page_icon="🚨",
-    layout="wide"
+    page_icon="chart",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 
 # ============================================================
-# CUSTOM DASHBOARD STYLE
+# PROFESSIONAL LIGHT THEME
 # ============================================================
 
 st.markdown(
     """
     <style>
 
-    /* ======================================================
-       MAIN APPLICATION
-       ====================================================== */
+    /* Main application */
 
     .stApp {
         background-color: #F5F7FA;
     }
 
-    .block-container { 
+    .block-container {
+        max-width: 1500px;
         padding-top: 2rem;
-        padding-bottom: 3rem;
+        padding-bottom: 4rem;
     }
 
+    /* Text */
 
-    /* ======================================================
-       HEADER
-       ====================================================== */
-
-    .dashboard-header {
-        background-color: #FFFFFF;
-        padding: 26px 30px;
-        border-radius: 16px;
-        border: 1px solid #E5E7EB;
-        margin-bottom: 28px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
-
-    .dashboard-title {
-        margin: 0;
-        font-size: 36px;
-        font-weight: 700;
+    h1, h2, h3, h4, h5, h6 {
         color: #111827 !important;
     }
-
-    .dashboard-subtitle {
-        margin: 8px 0 0 0;
-        font-size: 16px;
-        color: #4B5563 !important;
-    }
-
-
-    /* ======================================================
-       SECTION HEADINGS
-       ====================================================== */
-
-    .section-title {
-        color: #111827 !important;
-        font-size: 25px;
-        font-weight: 700;
-        margin-top: 28px;
-        margin-bottom: 16px;
-    }
-
-
-    /* ======================================================
-       KPI CARDS
-       ====================================================== */
-
-    div[data-testid="stMetric"] {
-        background-color: #FFFFFF;
-        padding: 20px 18px;
-        border-radius: 14px;
-        border: 1px solid #E5E7EB;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        min-height: 105px;
-    }
-
-    div[data-testid="stMetricLabel"] {
-        color: #4B5563 !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-    }
-
-    div[data-testid="stMetricValue"] {
-        color: #111827 !important;
-        font-size: 29px !important;
-        font-weight: 700 !important;
-    }
-
-
-    /* ======================================================
-       GENERAL TEXT
-       ====================================================== */
 
     p {
-        color: #1F2937;
+        color: #374151 !important;
     }
 
     label {
@@ -116,51 +50,81 @@ st.markdown(
         font-weight: 600 !important;
     }
 
-    .stMarkdown {
-        color: #1F2937;
+    /* Metric cards */
+
+    div[data-testid="stMetric"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 14px !important;
+        padding: 20px !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05) !important;
     }
 
+    div[data-testid="stMetricLabel"] {
+        color: #4B5563 !important;
+    }
 
-    /* ======================================================
-       SELECTBOX
-       ====================================================== */
+    div[data-testid="stMetricValue"] {
+        color: #111827 !important;
+        font-weight: 800 !important;
+    }
+
+    div[data-testid="stMetricDelta"] {
+        color: #374151 !important;
+    }
+
+    /* Select boxes */
 
     div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         border: 1px solid #D1D5DB !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
     }
 
+    div[data-baseweb="select"] span {
+        color: #111827 !important;
+    }
 
-    /* ======================================================
-       DATAFRAME
-       ====================================================== */
+    /* Input */
+
+    input {
+        color: #111827 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Buttons */
+
+    .stButton > button {
+        border-radius: 8px;
+        border: 1px solid #D1D5DB;
+        background-color: #FFFFFF;
+        color: #111827;
+        font-weight: 600;
+    }
+
+    .stButton > button:hover {
+        border-color: #6B7280;
+        color: #111827;
+    }
+
+    /* Dataframe */
 
     div[data-testid="stDataFrame"] {
+        border: 1px solid #E5E7EB;
         border-radius: 12px;
         overflow: hidden;
-        border: 1px solid #E5E7EB;
     }
 
-
-    /* ======================================================
-       ALERT BOX TEXT
-       ====================================================== */
+    /* Alerts */
 
     div[data-testid="stAlert"] {
-        border-radius: 12px;
+        border-radius: 10px;
     }
 
-
-    /* ======================================================
-       DIVIDERS
-       ====================================================== */
+    /* Divider */
 
     hr {
-        border: none;
-        border-top: 1px solid #E5E7EB;
-        margin-top: 28px;
-        margin-bottom: 28px;
+        border-color: #E5E7EB !important;
     }
 
     </style>
@@ -173,180 +137,351 @@ st.markdown(
 # HEADER
 # ============================================================
 
-st.markdown(
-    """
-<div class="dashboard-header">
-    <h1 class="dashboard-title">🚨 AI Anomaly Watcher</h1>
-    <p class="dashboard-subtitle">
-        AI-powered business data monitoring and anomaly detection system
-    </p>
-</div>
-""",
-    unsafe_allow_html=True
+st.title("📊 AI Anomaly Watcher")
+
+st.caption(
+    "AI-powered Flipkart business data monitoring and anomaly detection dashboard"
+)
+
+st.divider()
+
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
+
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+DATA_FILE = os.path.join(
+    DATA_DIR,
+    "business_data.csv"
+)
+
+ALERT_FILE = os.path.join(
+    DATA_DIR,
+    "alert_report.csv"
+)
+
+ML_ALERT_FILE = os.path.join(
+    DATA_DIR,
+    "ml_anomaly_report.csv"
+)
+
+HISTORY_FILE = os.path.join(
+    DATA_DIR,
+    "alert_history.csv"
 )
 
 
 # ============================================================
-# GENERATE REPORTS IF THEY DO NOT EXIST
+# HELPER FUNCTIONS
 # ============================================================
 
-if not os.path.exists("data/alert_report.csv"):
+def normalize_columns(dataframe):
 
-    result = subprocess.run(
-        [sys.executable, "src/anomaly_detector.py"],
-        capture_output=True,
-        text=True
+    dataframe = dataframe.copy()
+
+    dataframe.columns = [
+        str(column).strip().lower()
+        for column in dataframe.columns
+    ]
+
+    return dataframe
+
+
+def format_number(value):
+
+    if pd.isna(value):
+        return "0"
+
+    return f"{value:,.0f}"
+
+
+def format_currency(value):
+
+    if pd.isna(value):
+        return "₹0"
+
+    return f"₹{value:,.0f}"
+
+
+def load_csv(file_path):
+
+    if not os.path.exists(file_path):
+        return None
+
+    try:
+
+        dataframe = pd.read_csv(file_path)
+
+        dataframe = normalize_columns(dataframe)
+
+        return dataframe
+
+    except Exception as error:
+
+        st.error(
+            f"Unable to read file: {error}"
+        )
+
+        return None
+
+
+def convert_dates(dataframe):
+
+    dataframe = dataframe.copy()
+
+    possible_date_columns = [
+        "date",
+        "order_date"
+    ]
+
+    for column in possible_date_columns:
+
+        if column in dataframe.columns:
+
+            dataframe[column] = pd.to_datetime(
+                dataframe[column],
+                errors="coerce",
+                dayfirst=True
+            )
+
+    return dataframe
+
+
+# ============================================================
+# LOAD BUSINESS DATA
+# ============================================================
+
+if not os.path.exists(DATA_FILE):
+
+    st.error(
+        "Business data file was not found."
     )
 
-    if result.returncode != 0:
-        st.error("Unable to generate anomaly reports.")
-        st.code(result.stderr)
-        st.stop()
-
-
-if not os.path.exists("data/ml_anomaly_report.csv"):
-
-    result = subprocess.run(
-        [sys.executable, "src/ml_anomaly_detector.py"],
-        capture_output=True,
-        text=True
+    st.info(
+        "Please make sure data/business_data.csv exists."
     )
 
-    if result.returncode != 0:
-        st.error("Unable to generate ML anomaly report.")
-        st.code(result.stderr)
-        st.stop()
+    st.stop()
+
+
+data = load_csv(DATA_FILE)
+
+if data is None or data.empty:
+
+    st.error(
+        "Business dataset is empty."
+    )
+
+    st.stop()
+
+
+data = convert_dates(data)
 
 
 # ============================================================
-# LOAD ANOMALY REPORT
+# LOAD ALERT REPORT
 # ============================================================
 
-alerts = pd.read_csv(
-    "data/alert_report.csv"
-)
+alerts = load_csv(ALERT_FILE)
+
+if alerts is None:
+
+    alerts = pd.DataFrame()
+
+
+if not alerts.empty:
+
+    alerts = convert_dates(alerts)
 
 
 # ============================================================
 # LOAD ML REPORT
 # ============================================================
 
-ml_report = pd.read_csv(
-    "data/ml_anomaly_report.csv"
-)
+ml_alerts = load_csv(ML_ALERT_FILE)
+
+if ml_alerts is None:
+
+    ml_alerts = pd.DataFrame()
 
 
-# ============================================================
-# CREATE READABLE ML STATUS
-# ============================================================
+if not ml_alerts.empty:
 
-ml_report["ML_Status"] = ml_report[
-    "ML_Anomaly"
-].apply(
-    lambda x: "🤖 ML Detected"
-    if str(x).lower() == "true"
-    else "✓ Not Detected"
-)
+    ml_alerts = convert_dates(ml_alerts)
 
 
 # ============================================================
 # LOAD ALERT HISTORY
 # ============================================================
 
-history_file = "data/alert_history.csv"
+history = load_csv(HISTORY_FILE)
 
-try:
+if history is None:
 
-    alert_history = pd.read_csv(
-        history_file
+    history = pd.DataFrame()
+
+
+if not history.empty:
+
+    history = convert_dates(history)
+
+
+# ============================================================
+# DATASET INFORMATION
+# ============================================================
+
+st.subheader("📌 Dataset Overview")
+
+overview_col1, overview_col2, overview_col3, overview_col4 = st.columns(4)
+
+
+with overview_col1:
+
+    st.metric(
+        "Total Records",
+        format_number(len(data))
     )
 
-except FileNotFoundError:
 
-    alert_history = pd.DataFrame()
+with overview_col2:
+
+    st.metric(
+        "Total Columns",
+        format_number(len(data.columns))
+    )
+
+
+with overview_col3:
+
+    if "total_sales_inr" in data.columns:
+
+        total_sales = data["total_sales_inr"].sum()
+
+        st.metric(
+            "Total Sales",
+            format_currency(total_sales)
+        )
+
+    else:
+
+        st.metric(
+            "Total Sales",
+            "N/A"
+        )
+
+
+with overview_col4:
+
+    if "profit_inr" in data.columns:
+
+        total_profit = data["profit_inr"].sum()
+
+        st.metric(
+            "Total Profit",
+            format_currency(total_profit)
+        )
+
+    else:
+
+        st.metric(
+            "Total Profit",
+            "N/A"
+        )
+
+
+st.divider()
 
 
 # ============================================================
-# ANOMALY COUNTS
+# ANOMALY KPI SECTION
 # ============================================================
 
-total_anomalies = len(alerts)
-
-critical_alerts = len(
-    alerts[
-        alerts["severity"] == "Critical"
-    ]
-)
-
-high_alerts = len(
-    alerts[
-        alerts["severity"] == "High"
-    ]
-)
-
-medium_alerts = len(
-    alerts[
-        alerts["severity"] == "Medium"
-    ]
-)
-
-low_alerts = len(
-    alerts[
-        alerts["severity"] == "Low"
-    ]
-)
+st.subheader("🚨 Anomaly Monitoring")
 
 
-# ============================================================
-# ANOMALY OVERVIEW
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">📊 Anomaly Overview</div>',
-    unsafe_allow_html=True
-)
+total_alerts = len(alerts)
 
 
-col1, col2, col3, col4, col5 = st.columns(5)
+critical_count = 0
+high_count = 0
+medium_count = 0
+low_count = 0
 
 
-with col1:
+if not alerts.empty and "severity" in alerts.columns:
+
+    severity_series = (
+        alerts["severity"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    critical_count = (
+        severity_series == "critical"
+    ).sum()
+
+    high_count = (
+        severity_series == "high"
+    ).sum()
+
+    medium_count = (
+        severity_series == "medium"
+    ).sum()
+
+    low_count = (
+        severity_series == "low"
+    ).sum()
+
+
+kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+
+
+with kpi1:
 
     st.metric(
         "Total Anomalies",
-        total_anomalies
+        format_number(total_alerts)
     )
 
 
-with col2:
+with kpi2:
 
     st.metric(
-        "🚨 Critical",
-        critical_alerts
+        "Critical",
+        format_number(critical_count)
     )
 
 
-with col3:
+with kpi3:
 
     st.metric(
-        "⚠️ High",
-        high_alerts
+        "High",
+        format_number(high_count)
     )
 
 
-with col4:
+with kpi4:
 
     st.metric(
-        "ℹ️ Medium",
-        medium_alerts
+        "Medium",
+        format_number(medium_count)
     )
 
 
-with col5:
+with kpi5:
 
     st.metric(
-        "🟢 Low",
-        low_alerts
+        "Low",
+        format_number(low_count)
     )
 
 
@@ -354,409 +489,774 @@ st.divider()
 
 
 # ============================================================
-# FILTER ANOMALIES
+# FILTER SECTION
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">🔎 Filter Anomalies</div>',
-    unsafe_allow_html=True
-)
+st.subheader("🔎 Filter Anomalies")
+
+if not alerts.empty:
+
+    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
 
 
-col1, col2 = st.columns(2)
+    # --------------------------------------------------------
+    # Severity filter
+    # --------------------------------------------------------
 
+    with filter_col1:
 
-with col1:
-
-    severity_filter = st.selectbox(
-        "Filter by Severity",
-        [
+        severity_options = [
             "All",
             "Critical",
             "High",
             "Medium",
             "Low"
         ]
-    )
 
-
-with col2:
-
-    date_filter = st.selectbox(
-        "Filter by Date",
-        [
-            "All"
-        ]
-        + sorted(
-            alerts["Date"]
-            .astype(str)
-            .unique()
-            .tolist()
+        selected_severity = st.selectbox(
+            "Severity",
+            severity_options
         )
-    )
 
 
-# ============================================================
-# APPLY SEVERITY FILTER
-# ============================================================
+    # --------------------------------------------------------
+    # Metric filter
+    # --------------------------------------------------------
 
-if severity_filter == "All":
+    with filter_col2:
+
+        if "metric" in alerts.columns:
+
+            metric_options = [
+                "All"
+            ] + sorted(
+                alerts["metric"]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+        else:
+
+            metric_options = ["All"]
+
+
+        selected_metric = st.selectbox(
+            "Metric",
+            metric_options
+        )
+
+
+    # --------------------------------------------------------
+    # Category filter
+    # --------------------------------------------------------
+
+    with filter_col3:
+
+        if "category" in alerts.columns:
+
+            category_options = [
+                "All"
+            ] + sorted(
+                alerts["category"]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+        else:
+
+            category_options = ["All"]
+
+
+        selected_category = st.selectbox(
+            "Category",
+            category_options
+        )
+
+
+    # --------------------------------------------------------
+    # Region filter
+    # --------------------------------------------------------
+
+    with filter_col4:
+
+        if "region" in alerts.columns:
+
+            region_options = [
+                "All"
+            ] + sorted(
+                alerts["region"]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+
+        else:
+
+            region_options = ["All"]
+
+
+        selected_region = st.selectbox(
+            "Region",
+            region_options
+        )
+
+
+    # ========================================================
+    # APPLY FILTERS
+    # ========================================================
 
     filtered_alerts = alerts.copy()
 
+
+    if (
+        selected_severity != "All"
+        and "severity" in filtered_alerts.columns
+    ):
+
+        filtered_alerts = filtered_alerts[
+            filtered_alerts["severity"]
+            .astype(str)
+            .str.lower()
+            == selected_severity.lower()
+        ]
+
+
+    if (
+        selected_metric != "All"
+        and "metric" in filtered_alerts.columns
+    ):
+
+        filtered_alerts = filtered_alerts[
+            filtered_alerts["metric"]
+            .astype(str)
+            == selected_metric
+        ]
+
+
+    if (
+        selected_category != "All"
+        and "category" in filtered_alerts.columns
+    ):
+
+        filtered_alerts = filtered_alerts[
+            filtered_alerts["category"]
+            .astype(str)
+            == selected_category
+        ]
+
+
+    if (
+        selected_region != "All"
+        and "region" in filtered_alerts.columns
+    ):
+
+        filtered_alerts = filtered_alerts[
+            filtered_alerts["region"]
+            .astype(str)
+            == selected_region
+        ]
+
+
 else:
 
-    filtered_alerts = alerts[
-        alerts["severity"] == severity_filter
-    ].copy()
-
-
-# ============================================================
-# APPLY DATE FILTER
-# ============================================================
-
-if date_filter != "All":
-
-    filtered_alerts = filtered_alerts[
-        filtered_alerts["Date"]
-        .astype(str)
-        == date_filter
-    ].copy()
-
-
-# ============================================================
-# PREPARE ML STATUS
-# ============================================================
-
-ml_columns = ml_report[
-    [
-        "Date",
-        "ML_Status"
-    ]
-].copy()
-
-
-ml_columns["Date"] = (
-    pd.to_datetime(
-        ml_columns["Date"]
-    )
-    .dt.strftime("%Y-%m-%d")
-)
-
-
-# ============================================================
-# STANDARDIZE ALERT DATE
-# ============================================================
-
-if not filtered_alerts.empty:
-
-    filtered_alerts["Date"] = (
-        pd.to_datetime(
-            filtered_alerts["Date"]
-        )
-        .dt.strftime("%Y-%m-%d")
-    )
-
-
-# ============================================================
-# MERGE ML STATUS
-# ============================================================
-
-if not filtered_alerts.empty:
-
-    filtered_alerts = filtered_alerts.merge(
-        ml_columns,
-        on="Date",
-        how="left"
-    )
-
-
-# ============================================================
-# DETECTED ANOMALIES
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">🚨 Detected Anomalies</div>',
-    unsafe_allow_html=True
-)
-
-
-if filtered_alerts.empty:
+    filtered_alerts = pd.DataFrame()
 
     st.info(
-        "No anomalies found for the selected filters."
+        "No anomaly report is currently available."
     )
 
-else:
+
+# ============================================================
+# FILTERED RESULT COUNT
+# ============================================================
+
+st.write(
+    f"Showing **{len(filtered_alerts)}** anomaly records."
+)
+
+
+# ============================================================
+# ANOMALY TABLE
+# ============================================================
+
+st.subheader("📋 Detected Anomalies")
+
+
+if not filtered_alerts.empty:
 
     display_columns = [
-        "Date",
+        "date",
+        "order_id",
         "metric",
         "value",
         "change_percent",
         "severity",
-        "ML_Status",
-        "ML_Anomaly_Score",
-        "Explanation"
+        "product",
+        "category",
+        "region",
+        "z_score",
+        "ml_anomaly",
+        "explanation"
     ]
 
+
+    available_columns = [
+        column
+        for column in display_columns
+        if column in filtered_alerts.columns
+    ]
+
+
+    anomaly_table = filtered_alerts[
+        available_columns
+    ].copy()
+
+
     st.dataframe(
-        filtered_alerts[
-            display_columns
-        ],
+        anomaly_table,
         width="stretch",
-        hide_index=False
-    )
-
-
-# ============================================================
-# BUSINESS IMPACT SUMMARY
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">📌 Business Impact Summary</div>',
-    unsafe_allow_html=True
-)
-
-
-if filtered_alerts.empty:
-
-    st.info(
-        "No business impact detected for the selected filters."
+        hide_index=True
     )
 
 else:
 
-    critical_metrics = (
-        filtered_alerts[
-            filtered_alerts["severity"] == "Critical"
-        ]["metric"]
-        .tolist()
-    )
-
-    high_metrics = (
-        filtered_alerts[
-            filtered_alerts["severity"] == "High"
-        ]["metric"]
-        .tolist()
+    st.success(
+        "No anomalies match the selected filters."
     )
 
 
-    if critical_metrics:
-
-        st.error(
-            "🚨 Critical metrics requiring attention: "
-            + ", ".join(
-                critical_metrics
-            )
-        )
-
-
-    if high_metrics:
-
-        st.warning(
-            "⚠️ High-priority metrics: "
-            + ", ".join(
-                high_metrics
-            )
-        )
-
-
-    st.write(
-        f"**{len(filtered_alerts)}** "
-        "anomaly/anomalies identified "
-        "in the selected data."
-    )
+st.divider()
 
 
 # ============================================================
 # BUSINESS INSIGHTS
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">💡 Business Insights</div>',
-    unsafe_allow_html=True
-)
+st.subheader("💡 Business Insights")
 
 
-if filtered_alerts.empty:
+if not filtered_alerts.empty:
 
-    st.info(
-        "No business insights available."
-    )
+    insight_col1, insight_col2 = st.columns(2)
+
+
+    # --------------------------------------------------------
+    # Most affected metric
+    # --------------------------------------------------------
+
+    with insight_col1:
+
+        if "metric" in filtered_alerts.columns:
+
+            metric_counts = (
+                filtered_alerts["metric"]
+                .value_counts()
+            )
+
+
+            if not metric_counts.empty:
+
+                top_metric = metric_counts.index[0]
+
+                top_metric_count = metric_counts.iloc[0]
+
+                st.markdown(
+                    f"### 📊 Most Affected Metric"
+                )
+
+                st.info(
+                    f"{top_metric} has the highest number "
+                    f"of detected anomalies with "
+                    f"{top_metric_count} alerts."
+                )
+
+
+    # --------------------------------------------------------
+    # Most affected category
+    # --------------------------------------------------------
+
+    with insight_col2:
+
+        if "category" in filtered_alerts.columns:
+
+            category_counts = (
+                filtered_alerts["category"]
+                .value_counts()
+            )
+
+
+            if not category_counts.empty:
+
+                top_category = category_counts.index[0]
+
+                top_category_count = category_counts.iloc[0]
+
+                st.markdown(
+                    f"### 🛍️ Most Affected Category"
+                )
+
+                st.info(
+                    f"{top_category} has the highest number "
+                    f"of detected anomaly records with "
+                    f"{top_category_count} alerts."
+                )
+
+
+    # --------------------------------------------------------
+    # Highest percentage change
+    # --------------------------------------------------------
+
+    if "change_percent" in filtered_alerts.columns:
+
+        change_values = pd.to_numeric(
+            filtered_alerts["change_percent"],
+            errors="coerce"
+        )
+
+
+        if not change_values.dropna().empty:
+
+            max_change_index = (
+                change_values.abs()
+                .idxmax()
+            )
+
+
+            max_change = (
+                filtered_alerts
+                .loc[max_change_index]
+            )
+
+
+            st.markdown(
+                "### 📈 Largest Detected Change"
+            )
+
+
+            metric_name = max_change.get(
+                "metric",
+                "Unknown"
+            )
+
+
+            change_value = max_change.get(
+                "change_percent",
+                0
+            )
+
+
+            st.warning(
+                f"{metric_name} recorded the largest "
+                f"detected change of "
+                f"{float(change_value):.2f}%."
+            )
+
 
 else:
 
-    for _, row in filtered_alerts.iterrows():
-
-        direction = (
-            "increased"
-            if row["change_percent"] > 0
-            else "decreased"
-        )
-
-        change = abs(
-            row["change_percent"]
-        )
+    st.info(
+        "Business insights will appear when anomaly records are available."
+    )
 
 
-        if row["severity"] == "Critical":
-
-            st.error(
-                f"🚨 Critical: "
-                f"{row['metric']} "
-                f"{direction} "
-                f"by {change:.1f}%."
-            )
-
-
-        elif row["severity"] == "High":
-
-            st.warning(
-                f"⚠️ High: "
-                f"{row['metric']} "
-                f"{direction} "
-                f"by {change:.1f}%."
-            )
-
-
-        elif row["severity"] == "Medium":
-
-            st.info(
-                f"ℹ️ Medium: "
-                f"{row['metric']} "
-                f"{direction} "
-                f"by {change:.1f}%."
-            )
-
-
-        else:
-
-            st.success(
-                f"🟢 Low: "
-                f"{row['metric']} "
-                f"{direction} "
-                f"by {change:.1f}%."
-            )
-
-
-        st.write(
-            row["Explanation"]
-        )
+st.divider()
 
 
 # ============================================================
 # ANOMALY CHANGE CHART
 # ============================================================
 
-if not filtered_alerts.empty:
+st.subheader("📈 Anomaly Change Percentage")
 
-    st.markdown(
-        '<div class="section-title">📈 Anomaly Change (%)</div>',
-        unsafe_allow_html=True
+
+if (
+    not filtered_alerts.empty
+    and "change_percent" in filtered_alerts.columns
+):
+
+    chart_data = filtered_alerts.copy()
+
+
+    chart_data["change_percent"] = pd.to_numeric(
+        chart_data["change_percent"],
+        errors="coerce"
     )
 
 
-    chart_data = (
-        filtered_alerts
-        .set_index("metric")
-        ["change_percent"]
+    chart_data = chart_data.dropna(
+        subset=["change_percent"]
     )
 
 
-    st.bar_chart(
-        chart_data
+    if not chart_data.empty:
+
+        if "metric" in chart_data.columns:
+
+            chart_grouped = (
+                chart_data
+                .groupby("metric")["change_percent"]
+                .mean()
+                .sort_values(
+                    ascending=False
+                )
+            )
+
+            st.bar_chart(
+                chart_grouped
+            )
+
+        else:
+
+            st.bar_chart(
+                chart_data[
+                    ["change_percent"]
+                ]
+            )
+
+else:
+
+    st.info(
+        "No anomaly change data available."
     )
 
-
-# ============================================================
-# ML ANOMALY DETECTION
-# ============================================================
 
 st.divider()
 
 
-st.markdown(
-    '<div class="section-title">🤖 ML Anomaly Detection</div>',
-    unsafe_allow_html=True
-)
+# ============================================================
+# SALES AND PROFIT ANALYSIS
+# ============================================================
+
+st.subheader("💰 Sales & Profit Analysis")
 
 
-ml_anomalies = ml_report[
-    ml_report["ML_Anomaly"].astype(str).str.lower() == "true"
-]
+sales_col1, sales_col2 = st.columns(2)
 
 
-st.write(
-    f"ML model detected "
-    f"**{len(ml_anomalies)}** "
-    f"anomalous record(s)."
-)
+# ------------------------------------------------------------
+# Sales by category
+# ------------------------------------------------------------
+
+with sales_col1:
+
+    if (
+        "category" in data.columns
+        and "total_sales_inr" in data.columns
+    ):
+
+        category_sales = (
+            data.groupby("category")[
+                "total_sales_inr"
+            ]
+            .sum()
+            .sort_values(
+                ascending=False
+            )
+        )
 
 
-if ml_anomalies.empty:
+        st.markdown(
+            "### 🛍️ Sales by Category"
+        )
 
-    st.success(
-        "No anomalies were detected by the ML model."
+
+        st.bar_chart(
+            category_sales
+        )
+
+    else:
+
+        st.info(
+            "Category sales data is not available."
+        )
+
+
+# ------------------------------------------------------------
+# Profit by category
+# ------------------------------------------------------------
+
+with sales_col2:
+
+    if (
+        "category" in data.columns
+        and "profit_inr" in data.columns
+    ):
+
+        category_profit = (
+            data.groupby("category")[
+                "profit_inr"
+            ]
+            .sum()
+            .sort_values(
+                ascending=False
+            )
+        )
+
+
+        st.markdown(
+            "### 💵 Profit by Category"
+        )
+
+
+        st.bar_chart(
+            category_profit
+        )
+
+    else:
+
+        st.info(
+            "Category profit data is not available."
+        )
+
+
+st.divider()
+
+
+# ============================================================
+# MONTHLY SALES
+# ============================================================
+
+st.subheader("📅 Monthly Sales Trend")
+
+
+if (
+    "order_date" in data.columns
+    and "total_sales_inr" in data.columns
+):
+
+    monthly_data = data.copy()
+
+
+    monthly_data = monthly_data.dropna(
+        subset=["order_date"]
+    )
+
+
+    monthly_data["year_month"] = (
+        monthly_data["order_date"]
+        .dt.to_period("M")
+        .astype(str)
+    )
+
+
+    monthly_sales = (
+        monthly_data
+        .groupby("year_month")[
+            "total_sales_inr"
+        ]
+        .sum()
+    )
+
+
+    st.line_chart(
+        monthly_sales
     )
 
 else:
 
-    st.warning(
-        "⚠️ ML model detected unusual business activity."
+    st.info(
+        "Monthly sales data is not available."
     )
 
 
-    ml_display = ml_anomalies[
-        [
-            "Date",
-            "ML_Anomaly_Score"
-        ]
-    ].copy()
+st.divider()
 
 
-    ml_display["Date"] = (
-        pd.to_datetime(
-            ml_display["Date"]
+# ============================================================
+# ML ANOMALY MONITORING
+# ============================================================
+
+st.subheader("🤖 Machine Learning Anomaly Detection")
+
+
+if not ml_alerts.empty:
+
+    ml_col1, ml_col2, ml_col3 = st.columns(3)
+
+
+    # --------------------------------------------------------
+    # Total ML anomalies
+    # --------------------------------------------------------
+
+    with ml_col1:
+
+        ml_count = len(ml_alerts)
+
+        st.metric(
+            "ML Anomalies",
+            format_number(ml_count)
         )
-        .dt.strftime("%Y-%m-%d")
+
+
+    # --------------------------------------------------------
+    # ML anomaly rate
+    # --------------------------------------------------------
+
+    with ml_col2:
+
+        if len(data) > 0:
+
+            ml_rate = (
+                len(ml_alerts)
+                / len(data)
+                * 100
+            )
+
+        else:
+
+            ml_rate = 0
+
+
+        st.metric(
+            "ML Anomaly Rate",
+            f"{ml_rate:.1f}%"
+        )
+
+
+    # --------------------------------------------------------
+    # ML report columns
+    # --------------------------------------------------------
+
+    with ml_col3:
+
+        st.metric(
+            "Detection Method",
+            "Isolation Forest"
+        )
+
+
+    st.markdown(
+        "### ML Anomaly Records"
     )
 
 
-    st.dataframe(
-        ml_display,
-        width="stretch"
+    ml_display_columns = [
+        "date",
+        "order_id",
+        "product",
+        "category",
+        "region",
+        "ml_anomaly",
+        "ml_anomaly_score"
+    ]
+
+
+    ml_available_columns = [
+        column
+        for column in ml_display_columns
+        if column in ml_alerts.columns
+    ]
+
+
+    if ml_available_columns:
+
+        st.dataframe(
+            ml_alerts[
+                ml_available_columns
+            ],
+            width="stretch",
+            hide_index=True
+        )
+
+else:
+
+    st.info(
+        "ML anomaly report is not available yet."
     )
+
+
+st.divider()
 
 
 # ============================================================
 # ALERT HISTORY
 # ============================================================
 
-st.divider()
+st.subheader("🕒 Alert History")
 
 
-st.markdown(
-    '<div class="section-title">📜 Alert History</div>',
-    unsafe_allow_html=True
-)
+if not history.empty:
+
+    history_display = history.copy()
 
 
-if alert_history.empty:
+    history_columns = [
+        "monitoring_time",
+        "date",
+        "order_id",
+        "metric",
+        "value",
+        "change_percent",
+        "severity"
+    ]
 
-    st.info(
-        "No alert history available."
-    )
+
+    available_history_columns = [
+        column
+        for column in history_columns
+        if column in history_display.columns
+    ]
+
+
+    if available_history_columns:
+
+        st.dataframe(
+            history_display[
+                available_history_columns
+            ],
+            width="stretch",
+            hide_index=True
+        )
+
+    else:
+
+        st.dataframe(
+            history_display,
+            width="stretch",
+            hide_index=True
+        )
 
 else:
 
-    st.write(
-        f"Total historical alerts: "
-        f"**{len(alert_history)}**"
+    st.info(
+        "No alert history is available yet."
     )
 
+
+st.divider()
+
+
+# ============================================================
+# DATA PREVIEW
+# ============================================================
+
+with st.expander("📄 View Business Dataset"):
 
     st.dataframe(
-        alert_history,
-        width="stretch"
+        data,
+        width="stretch",
+        hide_index=True
     )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    "---"
+)
+
+st.caption(
+    "AI Anomaly Watcher • Flipkart Business Data Monitoring • "
+    "Statistical Z-Score + Machine Learning"
+)
+
+st.caption(
+    "Developed by Shreya Singh | Data Analyst Aspirant"
+)

@@ -1,155 +1,137 @@
 import os
 from datetime import datetime
-
 import pandas as pd
 
 
-# --------------------------------------------------
-# Create an alert
-# --------------------------------------------------
+def get_severity(change_percent):
+    change_percent = abs(float(change_percent))
 
-def create_alert(metric, value, change):
-
-    alert = {
-        "metric": metric,
-        "value": value,
-        "change_percent": round(change, 2),
-        "severity": determine_severity(change)
-    }
-
-    return alert
-
-
-# --------------------------------------------------
-# Determine alert severity
-# --------------------------------------------------
-
-def determine_severity(change):
-
-    change = abs(change)
-
-    if change >= 100:
+    if change_percent >= 100:
         return "Critical"
-
-    elif change >= 50:
+    elif change_percent >= 50:
         return "High"
-
-    elif change >= 20:
+    elif change_percent >= 20:
         return "Medium"
-
     else:
         return "Low"
 
 
-# --------------------------------------------------
-# Save alert history
-# --------------------------------------------------
+def create_alert(metric, value, change_percent):
+    severity = get_severity(change_percent)
+
+    return {
+        "Metric": metric,
+        "Value": float(value),
+        "Change_Percent": float(change_percent),
+        "Severity": severity
+    }
+
+
+def normalize_columns(data):
+    """
+    Standardize column names so old and new alert history
+    files cannot create duplicate columns.
+    """
+
+    data = data.copy()
+
+    # Remove accidental spaces
+    data.columns = [str(column).strip() for column in data.columns]
+
+    # Convert all column names to lowercase
+    data.columns = [column.lower() for column in data.columns]
+
+    # Remove duplicate columns
+    data = data.loc[:, ~data.columns.duplicated()]
+
+    return data
+
 
 def save_alert_history(alerts):
-
     history_file = "data/alert_history.csv"
 
-    # No alerts
-    if not alerts:
+    # Convert alerts to DataFrame
+    if isinstance(alerts, pd.DataFrame):
+        alerts_df = alerts.copy()
 
-        print("No alerts to save.")
+    elif isinstance(alerts, list):
+        if len(alerts) == 0:
+            return
 
+        alerts_df = pd.DataFrame(alerts)
+
+    else:
+        alerts_df = pd.DataFrame(alerts)
+
+    # Check if DataFrame is empty
+    if alerts_df.empty:
         return
 
-
-    # Convert new alerts into DataFrame
-    new_history = pd.DataFrame(alerts)
-
-
-    # Make Date format consistent
-    new_history["Date"] = (
-        pd.to_datetime(
-            new_history["Date"],
-            errors="coerce"
-        )
-        .dt.strftime("%Y-%m-%d")
-    )
-
+    # Normalize new alert columns
+    alerts_df = normalize_columns(alerts_df)
 
     # Add monitoring timestamp
-    new_history["monitoring_time"] = (
-        datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    alerts_df["monitoring_time"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
     )
 
-
-    # If history file does not exist
-    if not os.path.exists(history_file):
-
-        new_history.to_csv(
-            history_file,
-            index=False
-        )
-
-        print(
-            "Alert history created."
-        )
-
-        return
-
+    # Create data folder if needed
+    os.makedirs("data", exist_ok=True)
 
     # Load existing history
-    old_history = pd.read_csv(
-        history_file
-    )
+    if os.path.exists(history_file):
 
+        try:
+            existing_history = pd.read_csv(history_file)
 
-    # Make existing Date format consistent
-    if "Date" in old_history.columns:
+            # Normalize old history columns too
+            existing_history = normalize_columns(existing_history)
 
-        old_history["Date"] = (
-            pd.to_datetime(
-                old_history["Date"],
-                errors="coerce"
-            )
-            .dt.strftime("%Y-%m-%d")
-        )
+        except Exception:
+            existing_history = pd.DataFrame()
 
+    else:
+        existing_history = pd.DataFrame()
 
     # Combine old and new alerts
-    updated_history = pd.concat(
-        [
-            old_history,
-            new_history
-        ],
-        ignore_index=True
-    )
+    if existing_history.empty:
 
+        combined_history = alerts_df
 
-    # Columns used to identify
-    # the same alert
-    duplicate_columns = [
-        "Date",
-        "metric",
-        "value",
-        "change_percent",
-        "severity"
-    ]
+    else:
 
+        combined_history = pd.concat(
+            [existing_history, alerts_df],
+            ignore_index=True
+        )
 
     # Remove duplicate alerts
-    updated_history = (
-        updated_history
-        .drop_duplicates(
-            subset=duplicate_columns,
+    duplicate_columns = [
+        "date",
+        "order_id",
+        "metric",
+        "value",
+        "change_percent"
+    ]
+
+    available_columns = [
+        column
+        for column in duplicate_columns
+        if column in combined_history.columns
+    ]
+
+    if available_columns:
+
+        combined_history = combined_history.drop_duplicates(
+            subset=available_columns,
             keep="last"
         )
-    )
 
-
-    # Save cleaned history
-    updated_history.to_csv(
+    # Save cleaned alert history
+    combined_history.to_csv(
         history_file,
         index=False
     )
 
-
-    print(
-        "Alert history updated."
-    )
+    print("\nAlert history saved successfully:")
+    print(history_file)

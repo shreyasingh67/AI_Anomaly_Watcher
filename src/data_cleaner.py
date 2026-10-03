@@ -3,22 +3,30 @@ import pandas as pd
 
 
 # --------------------------------------------------
-# Required business columns
+# Required Flipkart dataset columns
 # --------------------------------------------------
 
 REQUIRED_COLUMNS = [
-    "Date",
-    "Revenue",
-    "Orders",
-    "Conversion_Rate",
-    "Traffic",
-    "Cost",
-    "Refunds"
+    "order_id",
+    "product_name",
+    "category",
+    "price_inr",
+    "quantity_sold",
+    "total_sales_inr",
+    "order_date",
+    "payment_method",
+    "customer_rating",
+    "month",
+    "year",
+    "profit_inr",
+    "discount_percent",
+    "customer_segment",
+    "region"
 ]
 
 
 # --------------------------------------------------
-# Load business data
+# Load Flipkart data
 # Supports CSV and Excel files
 # --------------------------------------------------
 
@@ -82,7 +90,7 @@ def validate_required_columns(data):
 
 
 # --------------------------------------------------
-# Clean business data
+# Clean Flipkart data
 # --------------------------------------------------
 
 def clean_data(data):
@@ -96,30 +104,39 @@ def clean_data(data):
     # Remove duplicate rows
     data = data.drop_duplicates()
 
-    # Convert Date column
-    data["Date"] = pd.to_datetime(
-        data["Date"],
+    # --------------------------------------------------
+    # Convert order date
+    # Dataset uses DD-MM-YYYY format
+    # --------------------------------------------------
+
+    data["order_date"] = pd.to_datetime(
+        data["order_date"],
+        format="%d-%m-%Y",
         errors="coerce"
     )
 
     # Check invalid dates
-    invalid_dates = data["Date"].isnull().sum()
+    invalid_dates = data["order_date"].isnull().sum()
 
     if invalid_dates > 0:
 
         raise ValueError(
-            f"Found {invalid_dates} invalid date value(s). "
-            "Please check the Date column."
+            f"Found {invalid_dates} invalid date value(s) "
+            "in order_date."
         )
 
-    # Business metric columns
+    # --------------------------------------------------
+    # Flipkart numeric columns
+    # --------------------------------------------------
+
     numeric_columns = [
-        "Revenue",
-        "Orders",
-        "Conversion_Rate",
-        "Traffic",
-        "Cost",
-        "Refunds"
+        "price_inr",
+        "quantity_sold",
+        "total_sales_inr",
+        "customer_rating",
+        "year",
+        "profit_inr",
+        "discount_percent"
     ]
 
     # Convert numeric columns
@@ -130,7 +147,10 @@ def clean_data(data):
             errors="coerce"
         )
 
+    # --------------------------------------------------
     # Check invalid numeric values
+    # --------------------------------------------------
+
     for column in numeric_columns:
 
         invalid_values = data[column].isnull().sum()
@@ -142,7 +162,10 @@ def clean_data(data):
                 f"value(s) in {column}."
             )
 
+    # --------------------------------------------------
     # Fill missing numeric values
+    # --------------------------------------------------
+
     for column in numeric_columns:
 
         if data[column].isnull().any():
@@ -151,7 +174,10 @@ def clean_data(data):
                 data[column].mean()
             )
 
+    # --------------------------------------------------
     # Check if dataset became empty
+    # --------------------------------------------------
+
     if data.empty:
 
         raise ValueError(
@@ -162,34 +188,61 @@ def clean_data(data):
 
 
 # --------------------------------------------------
-# Validate business data
+# Validate Flipkart data
 # --------------------------------------------------
 
 def validate_data(data):
 
-    print("\n========== DATA VALIDATION ==========")
+    print(
+        "\n========== DATA VALIDATION =========="
+    )
 
     # Required columns
     validate_required_columns(data)
 
-    print("\nRequired Columns:")
-    print("All required columns are present.")
+    print(
+        "\nRequired Columns:"
+    )
+
+    print(
+        "All required Flipkart columns are present."
+    )
 
     # Missing values
-    print("\nMissing Values:")
-    print(data.isnull().sum())
+    print(
+        "\nMissing Values:"
+    )
+
+    print(
+        data.isnull().sum()
+    )
 
     # Duplicate rows
-    print("\nDuplicate Rows:")
-    print(data.duplicated().sum())
+    print(
+        "\nDuplicate Rows:"
+    )
+
+    print(
+        data.duplicated().sum()
+    )
 
     # Data types
-    print("\nData Types:")
-    print(data.dtypes)
+    print(
+        "\nData Types:"
+    )
+
+    print(
+        data.dtypes
+    )
 
     # Dataset shape
-    print("\nDataset Shape:")
-    print(data.shape)
+    print(
+        "\nDataset Shape:"
+    )
+
+    print(
+        data.shape
+    )
 
 
 # --------------------------------------------------
@@ -205,16 +258,26 @@ if __name__ == "__main__":
             "data/business_data.csv"
         )
 
-        print("\n========== ORIGINAL DATA ==========")
-        print(data)
+        print(
+            "\n========== ORIGINAL DATA =========="
+        )
+
+        print(
+            data.head()
+        )
 
         # Clean data
         data = clean_data(
             data
         )
 
-        print("\n========== CLEANED DATA ==========")
-        print(data)
+        print(
+            "\n========== CLEANED DATA =========="
+        )
+
+        print(
+            data.head()
+        )
 
         # Validate cleaned data
         validate_data(
@@ -222,7 +285,7 @@ if __name__ == "__main__":
         )
 
         print(
-            "\nData cleaning and validation "
+            "\nFlipkart data cleaning and validation "
             "completed successfully."
         )
 
